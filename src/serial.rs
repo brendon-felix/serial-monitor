@@ -3,7 +3,7 @@ use anyhow::{bail, Context, Result};
 use log::{info, warn};
 use serialport5::{self, SerialPort, SerialPortBuilder, SerialPortInfo, SerialPortType};
 use std::io::{self, BufWriter, BufReader, BufRead, Read, Write};
-use std::fs::{self, OpenOptions, File};
+use std::fs::{self, OpenOptions};
 use std::sync::{Arc, Mutex};
 use regex::Regex;
 use std::time::Duration;
@@ -41,7 +41,7 @@ pub fn open_serial_port(args: &Args) -> Result<(SerialPort, String)> {
     let port = SerialPortBuilder::new()
         .baud_rate(baud_rate)
         .open(port_name.clone())?;
-    let _ = std::process::Command::new("cmd").args(["/c", "cls"]).spawn();
+    // let _ = std::process::Command::new("cmd").args(["/c", "cls"]).spawn();
     Ok((port, port_name))
 }
 

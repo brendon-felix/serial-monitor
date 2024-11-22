@@ -1,11 +1,11 @@
 mod actions;
 mod args;
 mod serial;
-mod config;
-use config::Config;
+// mod config;
+// use config::Config;
 use anyhow::Result;
 use args::Args;
-use clap::Parser;
+// use clap::Parser;
 use env_logger;
 
 fn main() -> Result<()> {
@@ -20,6 +20,8 @@ fn main() -> Result<()> {
     //     // serial::open(&args)?;
     //     serial::open_with_reconnect(&args)?;
     // }
+    actions::list_ports()?;
+    println!("___________________________________________________________________________");
     let args = Args{
         port: Some("COM5".to_string()),
         pid: None,

@@ -12,6 +12,7 @@ pub struct Config {
     // buffer_size: u32,
 }
 
+//update to use a filename parameter
 pub fn get_config(file: String) -> Result<Config, Box<dyn std::error::Error>>{
     let toml_str = fs::read_to_string("config.toml")?;
     let config: Config = toml::from_str(&toml_str)?;
