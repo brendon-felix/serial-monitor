@@ -21,6 +21,7 @@ toml = "0.8.19"
 serde = { version = "1.0.215", features = ["derive"]}
 regex = "1"
 chrono = "0.4.38"
+crossterm = "0.28.1"
 
 # The profile that 'cargo dist' will build with
 [profile.dist]

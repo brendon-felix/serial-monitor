@@ -3,10 +3,12 @@ use anyhow::{bail, Context, Result};
 use log::{info, warn};
 use serialport5::{self, SerialPort, SerialPortBuilder, SerialPortInfo, SerialPortType};
 use std::io::{self, BufWriter, BufReader, BufRead, Read, Write};
-use std::fs::{self, OpenOptions};
+use std::fs::{self, OpenOptions, File};
 use std::sync::{Arc, Mutex};
 use regex::Regex;
 use std::time::Duration;
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
+use crossterm::terminal::{enable_raw_mode, disable_raw_mode};
 use chrono::Local;
 
 pub fn find_by_usb_info(args: &Args) -> Result<Option<SerialPortInfo>> {
@@ -47,30 +49,38 @@ pub fn open_serial_port(args: &Args) -> Result<(SerialPort, String)> {
 }
 
 pub fn read_stdin_loop(_port: Arc<Mutex<SerialPort>>, _port_name: &str) -> Result<()> {
-    let stdin = std::io::stdin();
-    let mut stdin = stdin.lock();
-    // let mut buffer = [0; 512];
+    enable_raw_mode()?;
+    
     loop {
-        let mut input = String::new();
-        let read = stdin
-            .read_line(&mut input)
-            // .read(&mut buffer)
-            .context("failed to read from sttin")?;
-        if read == 0 {
-            return Ok(());
-        } else {
-            match input.trim() {
-                "c" => {
-                    let _ = std::process::Command::new("cmd").args(["/c", "cls"]).spawn();
+        if event::poll(Duration::from_millis(100))? {
+            // Read the key event
+            if let Event::Key(KeyEvent { code, kind, .. }) = event::read()? {
+                // Respond only to key press actions
+                if kind == KeyEventKind::Press {
+                    match code {
+                        KeyCode::Char('c') => {
+                            // Clear console output
+                            let _ = std::process::Command::new("cmd").args(["/c", "cls"]).spawn();
+                        }
+                        KeyCode::Char('d') => {
+                            // Truncate the file to delete its contents
+                            File::create("output.txt").expect("Failed to truncate the file");
+                            println!("Output file contents deleted");
+                        }
+                        KeyCode::Char('s') => {
+                            println!("Save");
+                        }
+                        KeyCode::Char('q') => {
+                            disable_raw_mode()?;
+                            std::process::exit(0);
+                        }
+                        KeyCode::Char('p') => {
+                            println!("Set Port");
+                        }
+                        _ => {}
+                    }
                 }
-                "s" => {println!("Save");}
-                "q" => {std::process::exit(0);}
-                "p" => {println!("Set Port");}
-                _ => {}
             }
-            // let mut port = port.lock().unwrap();
-            // port.write(&buffer[..read])
-            //     .context(format!("Failed to write to {}", port_name))?;
         }
     }
 }
