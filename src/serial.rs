@@ -7,6 +7,7 @@ use std::fs::{self, OpenOptions};
 use std::sync::{Arc, Mutex};
 use regex::Regex;
 use std::time::Duration;
+use chrono::Local;
 
 pub fn find_by_usb_info(args: &Args) -> Result<Option<SerialPortInfo>> {
     let ports = serialport5::available_ports().unwrap();
@@ -103,10 +104,15 @@ pub fn read_serial_loop<W: Write>(
                         // Only process if a full line is read (ends with a newline)
                         if line.ends_with('\n') {
                             // Remove unwanted ANSI codes
-                            let filtered_line = ansi_escape.replace_all(&line, "");
                             stdout.write_all(line.as_bytes())
                                 .context("Failed to write to stdout")?;
-                            file.write_all(filtered_line.as_bytes())
+                            
+                            let filtered_line = ansi_escape.replace_all(&line, "");
+                            let timestamp = Local::now().format("%H:%M:%S.%3f");
+                            let timed_line = format!("[{}] {}", timestamp, filtered_line);
+
+                        
+                            file.write_all(timed_line.as_bytes())
                                 .context("Failed to write to file")?;
 
                             if flush_stdout {

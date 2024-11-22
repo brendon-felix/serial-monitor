@@ -20,6 +20,7 @@ serialport5 = { version = "5.0.2"} # currenly the only branch which works on win
 toml = "0.8.19"
 serde = { version = "1.0.215", features = ["derive"]}
 regex = "1"
+chrono = "0.4.38"
 
 # The profile that 'cargo dist' will build with
 [profile.dist]
