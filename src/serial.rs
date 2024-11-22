@@ -10,6 +10,7 @@ use std::time::Duration;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use crossterm::terminal::{enable_raw_mode, disable_raw_mode};
 use chrono::Local;
+use colored::*;
 
 pub fn find_by_usb_info(args: &Args) -> Result<Option<SerialPortInfo>> {
     let ports = serialport5::available_ports().unwrap();
@@ -157,7 +158,7 @@ pub fn get_stdout_with_buffer_size(args: &Args) -> Box<dyn Write> {
 }
 
 pub fn open_with_reconnect(args: &Args) -> Result<()> {
-    let mut retry_count = 0;
+    let mut try_reconnect = false;
 
     let mut stdout = get_stdout_with_buffer_size(args);
 
@@ -181,6 +182,10 @@ pub fn open_with_reconnect(args: &Args) -> Result<()> {
         let result = open_serial_port(&args);
         match result {
             Ok((port, name)) => {
+                if try_reconnect {
+                    println!("{}", "Reconnected!".bold().green());
+                }
+
                 let port_arc = Arc::new(Mutex::new(port.try_clone()?));
                 let port_arc_clone = port_arc.clone();
 
@@ -204,16 +209,20 @@ pub fn open_with_reconnect(args: &Args) -> Result<()> {
                         std::thread::sleep(Duration::from_secs(1));
 
                         // Decrease the retry count
-                        retry_count -= 1;
+                        // retry_count -= 1;
 
                         // Log a message or take any other necessary action
-                        log::warn!("Reconnecting... Retries left: {}", retry_count);
+                        // log::warn!("Reconnecting... Retries left: {}", retry_count);
+                        
                     }
                 }
             }
             _ => {
-                retry_count += 1;
-                std::thread::sleep(Duration::from_secs(5));
+                if !try_reconnect {
+                    println!("{}", "Disconnected!".bold().red());
+                    try_reconnect = true;
+                }
+                std::thread::sleep(Duration::from_secs(1));
             }
         }
     }
