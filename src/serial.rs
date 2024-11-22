@@ -2,7 +2,7 @@ use crate::args::Args;
 use anyhow::{bail, Context, Result};
 use log::{info, warn};
 use serialport5::{self, SerialPort, SerialPortBuilder, SerialPortInfo, SerialPortType};
-use std::io::{self, BufWriter, BufRead, Read, Write};
+use std::io::{self, BufWriter, BufReader, BufRead, Read, Write};
 use std::fs::{self, OpenOptions, File};
 use std::sync::{Arc, Mutex};
 use regex::Regex;
@@ -81,29 +81,46 @@ pub fn read_serial_loop<W: Write>(
     flush_stdout: bool,
     port_name: &str,
 ) -> Result<()> {
-    let mut buffer = [0; 512];
-    let ansi_escape = Regex::new(r"\x1b\[[0-9;]*[mGK]").unwrap();
+    let mut buffer = Vec::new();
+    let ansi_escape = Regex::new(r"\x1b\[[0-9;]*[mK]").unwrap();
+    
     loop {
         let mut port = port.lock().unwrap();
-        match port.read(&mut buffer) {
+        let mut data = [0; 128]; // Smaller buffer for each read
+        match port.read(&mut data) {
             Ok(0) => return Ok(()),
             Ok(n) => {
-                // println!("{}", String::from_utf8_lossy(&buffer));
-                if flush_stdout {
-                    stdout.flush().context("Failed to flush stdout")?;
-                }
-                let data_slice = &buffer[..n];
-                stdout.write_all(data_slice)
-                    .context("Failed to write to stdout")?;
-                let data_string = String::from_utf8_lossy(data_slice);
-                let data_string = ansi_escape.replace_all(&data_string, "");
-                // let data_string: String = data_string.chars()
-                //     .filter(|&c| c.is_ascii_graphic() || c.is_whitespace())
-                //     .collect();
-                // let data_string = ansi_escape.replace_all(&data_string, "");
-                file.write_all(data_string.as_bytes())
-                    .context("Failed to write to file")?;
+                // Append new data to the buffer
+                buffer.extend_from_slice(&data[..n]);
                 
+                // Convert buffer to a string to process lines
+                if let Ok(text) = String::from_utf8(buffer.clone()) {
+                    // Create a buffered reader to read lines
+                    let mut reader = BufReader::new(text.as_bytes());
+                    let mut line = String::new();
+
+                    while reader.read_line(&mut line)? > 0 {
+                        // Only process if a full line is read (ends with a newline)
+                        if line.ends_with('\n') {
+                            // Remove unwanted ANSI codes
+                            let filtered_line = ansi_escape.replace_all(&line, "");
+                            stdout.write_all(line.as_bytes())
+                                .context("Failed to write to stdout")?;
+                            file.write_all(filtered_line.as_bytes())
+                                .context("Failed to write to file")?;
+
+                            if flush_stdout {
+                                stdout.flush().context("Failed to flush stdout")?;
+                            }
+
+                            // Clear the line buffer for the next line
+                            line.clear();
+                        }
+                    }
+
+                    // Remaining content in line buffer might be an incomplete line
+                    buffer = line.into_bytes(); // Resave remaining content back to the buffer for next read
+                }
             }
             Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => continue,
             Err(e) => {
