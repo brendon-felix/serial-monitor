@@ -2,8 +2,10 @@ use crate::args::Args;
 use anyhow::{bail, Context, Result};
 use log::{info, warn};
 use serialport5::{self, SerialPort, SerialPortBuilder, SerialPortInfo, SerialPortType};
-use std::io::{self, BufWriter, Read, Write};
+use std::io::{self, BufWriter, BufRead, Read, Write};
+use std::fs::{self, OpenOptions, File};
 use std::sync::{Arc, Mutex};
+use regex::Regex;
 use std::time::Duration;
 
 pub fn find_by_usb_info(args: &Args) -> Result<Option<SerialPortInfo>> {
@@ -39,24 +41,35 @@ pub fn open_serial_port(args: &Args) -> Result<(SerialPort, String)> {
     let port = SerialPortBuilder::new()
         .baud_rate(baud_rate)
         .open(port_name.clone())?;
-
+    let _ = std::process::Command::new("cmd").args(["/c", "cls"]).spawn();
     Ok((port, port_name))
 }
 
-pub fn read_stdin_loop(port: Arc<Mutex<SerialPort>>, port_name: &str) -> Result<()> {
+pub fn read_stdin_loop(_port: Arc<Mutex<SerialPort>>, _port_name: &str) -> Result<()> {
     let stdin = std::io::stdin();
     let mut stdin = stdin.lock();
-    let mut buffer = [0; 512];
+    // let mut buffer = [0; 512];
     loop {
+        let mut input = String::new();
         let read = stdin
-            .read(&mut buffer)
+            .read_line(&mut input)
+            // .read(&mut buffer)
             .context("failed to read from sttin")?;
         if read == 0 {
             return Ok(());
         } else {
-            let mut port = port.lock().unwrap();
-            port.write(&buffer[..read])
-                .context(format!("Failed to write to {}", port_name))?;
+            match input.trim() {
+                "c" => {
+                    let _ = std::process::Command::new("cmd").args(["/c", "cls"]).spawn();
+                }
+                "s" => {println!("Save");}
+                "q" => {std::process::exit(0);}
+                "p" => {println!("Set Port");}
+                _ => {}
+            }
+            // let mut port = port.lock().unwrap();
+            // port.write(&buffer[..read])
+            //     .context(format!("Failed to write to {}", port_name))?;
         }
     }
 }
@@ -64,21 +77,33 @@ pub fn read_stdin_loop(port: Arc<Mutex<SerialPort>>, port_name: &str) -> Result<
 pub fn read_serial_loop<W: Write>(
     port: Arc<Mutex<SerialPort>>,
     stdout: &mut W,
+    file: &mut W,
     flush_stdout: bool,
     port_name: &str,
 ) -> Result<()> {
     let mut buffer = [0; 512];
+    let ansi_escape = Regex::new(r"\x1b\[[0-9;]*[mGK]").unwrap();
     loop {
         let mut port = port.lock().unwrap();
         match port.read(&mut buffer) {
             Ok(0) => return Ok(()),
             Ok(n) => {
-                stdout
-                    .write_all(&buffer[..n])
-                    .context("Failed to write to stdout")?;
+                // println!("{}", String::from_utf8_lossy(&buffer));
                 if flush_stdout {
                     stdout.flush().context("Failed to flush stdout")?;
                 }
+                let data_slice = &buffer[..n];
+                stdout.write_all(data_slice)
+                    .context("Failed to write to stdout")?;
+                let data_string = String::from_utf8_lossy(data_slice);
+                let data_string = ansi_escape.replace_all(&data_string, "");
+                // let data_string: String = data_string.chars()
+                //     .filter(|&c| c.is_ascii_graphic() || c.is_whitespace())
+                //     .collect();
+                // let data_string = ansi_escape.replace_all(&data_string, "");
+                file.write_all(data_string.as_bytes())
+                    .context("Failed to write to file")?;
+                
             }
             Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => continue,
             Err(e) => {
@@ -93,7 +118,8 @@ pub fn get_stdout_with_buffer_size(args: &Args) -> Box<dyn Write> {
     if let Some(buf_size) = args.buf_size {
         Box::new(BufWriter::with_capacity(buf_size, io::stdout()))
     } else {
-        Box::new(io::stdout())
+        Box::new(BufWriter::with_capacity(1048576, io::stdout()))
+        // Box::new(io::stdout())
     }
 }
 
@@ -101,6 +127,22 @@ pub fn open_with_reconnect(args: &Args) -> Result<()> {
     let mut retry_count = 0;
 
     let mut stdout = get_stdout_with_buffer_size(args);
+
+    // Open the file for writing if the path is provided in args
+    let file_path = "output.txt";
+    /* -------------------------------------------------------------------------- */
+    // remove this
+    if fs::metadata(file_path).is_ok() {
+        fs::remove_file(file_path).context("Failed to remove existing output file")?;
+    }
+    /* -------------------------------------------------------------------------- */
+    let mut file: Box<dyn Write> = Box::new(OpenOptions::new()
+        .create(true)
+        .write(true)
+        .append(true)
+        .open(file_path)
+        .context("Failed to open output file")?);
+
 
     loop {
         let result = open_serial_port(&args);
@@ -118,7 +160,7 @@ pub fn open_with_reconnect(args: &Args) -> Result<()> {
                 });
 
                 // Read from serial port and write to stdout in the main thread.
-                match read_serial_loop(port_arc, &mut stdout, args.flush, &name) {
+                match read_serial_loop(port_arc, &mut stdout, &mut file, args.flush, &name) {
                     Ok(_) => {
                         // Successful read, break out of the loop
                         break;
@@ -138,36 +180,36 @@ pub fn open_with_reconnect(args: &Args) -> Result<()> {
             }
             _ => {
                 retry_count += 1;
-                std::thread::sleep(Duration::from_secs(1));
+                std::thread::sleep(Duration::from_secs(5));
             }
         }
     }
     Ok(())
 }
 
-pub fn open(args: &Args) -> Result<()> {
-    // Connect normally without reconnection logic
-    let (port, name): (SerialPort, String) = open_serial_port(&args)?;
-    let port_arc = Arc::new(Mutex::new(port));
+// pub fn open(args: &Args) -> Result<()> {
+//     // Connect normally without reconnection logic
+//     let (port, name): (SerialPort, String) = open_serial_port(&args)?;
+//     let port_arc = Arc::new(Mutex::new(port));
 
-    let port_arc_clone = port_arc.clone();
+//     let port_arc_clone = port_arc.clone();
 
-    // Spawn a thread to read from stdin and write to the serial port.
-    let name_clone = name.clone();
-    std::thread::spawn(move || {
-        if let Err(_) = read_stdin_loop(port_arc_clone, &name_clone) {
-            std::process::exit(1);
-        }
-    });
+//     // Spawn a thread to read from stdin and write to the serial port.
+//     let name_clone = name.clone();
+//     std::thread::spawn(move || {
+//         if let Err(_) = read_stdin_loop(port_arc_clone, &name_clone) {
+//             std::process::exit(1);
+//         }
+//     });
 
-    let mut stdout = BufWriter::new(std::io::stdout());
+//     let mut stdout = BufWriter::new(std::io::stdout());
 
-    // Read from serial port and write to stdout in the main thread.
-    match read_serial_loop(port_arc, &mut stdout, args.flush, &name) {
-        Err(_) => {
-            // Handle any specific error logic if needed
-        }
-        _ => {}
-    }
-    Ok(())
-}
+//     // Read from serial port and write to stdout in the main thread.
+//     match read_serial_loop(port_arc, &mut stdout, args.flush, &name) {
+//         Err(_) => {
+//             // Handle any specific error logic if needed
+//         }
+//         _ => {}
+//     }
+//     Ok(())
+// }
