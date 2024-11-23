@@ -119,8 +119,9 @@ pub fn read_serial_loop<W: Write>(
                                 .context("Failed to write to stdout")?;
                             
                             let filtered_line = ansi_escape.replace_all(&line, "");
-                            let timestamp = Local::now().format("%H:%M:%S.%3f");
-                            let timed_line = format!("[{}] {}", timestamp, filtered_line);
+                            // let timestamp = Local::now().format("%H:%M:%S.%3f");
+                            // let timed_line = format!("[{}] {}", timestamp, filtered_line);
+                            let timed_line = filtered_line;
 
                         
                             file.write_all(timed_line.as_bytes())
