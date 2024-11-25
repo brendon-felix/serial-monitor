@@ -23,6 +23,7 @@ regex = "1"
 chrono = "0.4.38"
 crossterm = "0.28.1"
 colored = "2.1.0"
+term_size = "0.3.2"
 
 # The profile that 'cargo dist' will build with
 [profile.dist]

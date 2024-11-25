@@ -1,20 +1,23 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, Context};
 use std::fs;
-use std::io::{self, Write};
+// use std::io::{self, Write};
 use toml;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 pub struct Config {
-    port: String,
-    // baud_rate: u32,
+    pub port: String,
+    pub baud_rate: u32,
     // reconnect: bool,
-    // buffer_size: u32,
+    pub buffer_size: usize,
 }
 
-//update to use a filename parameter
-pub fn get_config(file: String) -> Result<Config, Box<dyn std::error::Error>>{
-    let toml_str = fs::read_to_string("config.toml")?;
-    let config: Config = toml::from_str(&toml_str)?;
+pub fn get_config(filename: String) -> Result<Config>{
+    let toml_str = fs::read_to_string(filename).context("could not read config file")?;
+    let config: Config = toml::from_str(&toml_str).context("could not serialize config file")?;
     Ok(config)
 }
+
+// pub fn set_config(filename: String) -> Result<()> {
+
+// }

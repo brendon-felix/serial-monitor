@@ -1,38 +1,20 @@
-mod actions;
-mod args;
+mod commands;
 mod serial;
-// mod config;
-// use config::Config;
-use anyhow::Result;
-use args::Args;
-// use clap::Parser;
+mod config;
+use crate::config::get_config;
+use crate::commands::command_loop;
+use anyhow::{Result, Context};
 use env_logger;
 
 fn main() -> Result<()> {
     env_logger::init();
-    // let args = Args::parse();
-    // args.validate()?;
-    // if args.list {
-    //     actions::list_ports()?;
-    // } else if args.reconnect.unwrap_or_default() {
-    //     serial::open_with_reconnect(&args)?;
-    // } else {
-    //     // serial::open(&args)?;
-    //     serial::open_with_reconnect(&args)?;
-    // }
-    actions::list_ports()?;
-    println!("___________________________________________________________________________");
-    let args = Args{
-        port: Some("COM5".to_string()),
-        pid: None,
-        vid: None,
-        baud_rate: Some(115200),
-        reconnect: Some(true),
-        list: false,
-        buf_size: Some(1048576),
-        flush: true,
-    };
-    args.validate()?;
-    serial::open_with_reconnect(&args)?;
+    let config = get_config("serial_config.toml".to_string())
+        .context("couldn't open config file")?;
+    std::thread::spawn(move || {
+        if let Err(_) = command_loop() {
+            std::process::exit(1);
+        }
+    });
+    serial::open(config)?;
     Ok(())
 }
