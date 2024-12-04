@@ -9,7 +9,7 @@ pub struct Config {
     pub port: String,
     pub baud_rate: u32,
     // reconnect: bool,
-    pub buffer_size: usize,
+    // pub buffer_size: usize,
 }
 
 pub fn get_config(filename: String) -> Result<Config>{

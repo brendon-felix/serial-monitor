@@ -27,7 +27,7 @@ pub fn read_serial_loop<W: Write>(
     let ansi_escape = Regex::new(r"\x1b\[[0-9;]*[mK]").unwrap();
     loop {
         let mut port = port.lock().unwrap();
-        let mut data = [0; 128]; // Smaller buffer for each read
+        let mut data = [0; 256]; // Smaller buffer for each read
         match port.read(&mut data) {
             Ok(0) => return Ok(()),
             Ok(n) => {
@@ -83,7 +83,7 @@ fn new_output_file(file_path: String) -> Result<Box<dyn Write>> {
 
 pub fn open(config: Config) -> Result<()> {
     let mut try_reconnect = false;
-    let mut stdout = Box::new(BufWriter::with_capacity(config.buffer_size, io::stdout()));
+    let mut stdout = Box::new(BufWriter::with_capacity(1024, io::stdout()));
     let mut file = new_output_file("temp.txt".to_string()).expect("Can't open output file");
 
     loop {

@@ -9,7 +9,7 @@ use env_logger;
 fn main() -> Result<()> {
     env_logger::init();
     let config = get_config("serial_config.toml".to_string())
-        .context("couldn't open config file")?;
+        .context("Could not find configuration file `serial_config.toml`")?;
     std::thread::spawn(move || {
         if let Err(_) = command_loop() {
             std::process::exit(1);

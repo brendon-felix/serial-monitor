@@ -21,6 +21,7 @@ pub fn command_loop() -> Result<()> {
                         KeyCode::Char('q') => quit(),
                         KeyCode::Char('s') => save(),
                         KeyCode::Char('p') => set_port(),
+                        KeyCode::Char('h') => help_message(),
                         _ => {}
                     }
                 }
@@ -46,7 +47,7 @@ fn print_separator(text: &str) {
         }
     } else {
         println!(
-            "----------------------------{}-----------------------------",
+            "----------------------- {} -----------------------",
             text
         );
     }
@@ -59,6 +60,24 @@ fn clear_console() {
 fn wipe_output_file() {
     File::create("temp.txt").expect("Failed to truncate the file");
     print_separator("Output file wiped");
+}
+
+fn help_message() {
+    print_separator("Help");
+    print!
+    (
+"Press the following keys to execute commands:
+
+- 'c': Clear the console
+- 'd': Wipe the output file
+- 'l': List available ports
+- 'q': Quit the application
+- 's': Save current state
+- 'p': Set the current port
+- 'h': Display this help message
+"
+    );
+    print_separator("");
 }
 
 fn list_ports() {
