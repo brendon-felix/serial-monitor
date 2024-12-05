@@ -4,10 +4,11 @@ use std::fs;
 use toml;
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct Config {
     pub port: String,
     pub baud_rate: u32,
+    pub log_folder: String,
     // reconnect: bool,
     // pub buffer_size: usize,
 }

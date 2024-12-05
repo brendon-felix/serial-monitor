@@ -1,3 +1,4 @@
+use crate::config::Config;
 use anyhow::{Context, Result};
 use serialport5;
 use std::time::Duration;
@@ -6,8 +7,9 @@ use std::fs::{self, File};
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use crossterm::terminal::{enable_raw_mode, disable_raw_mode};
 use colored::*;
+use rfd::FileDialog;
 
-pub fn command_loop() -> Result<()> {
+pub fn command_loop(config: Config) -> Result<()> {
     enable_raw_mode().context("couldn't enabled raw mode")?;
     
     loop {
@@ -19,7 +21,7 @@ pub fn command_loop() -> Result<()> {
                         KeyCode::Char('d') => wipe_output_file(),
                         KeyCode::Char('l') => list_ports(),
                         KeyCode::Char('q') => quit(),
-                        KeyCode::Char('s') => save(),
+                        KeyCode::Char('s') => save(&config.log_folder),
                         KeyCode::Char('p') => set_port(),
                         KeyCode::Char('h') => help_message(),
                         _ => {}
@@ -98,7 +100,7 @@ fn quit() {
     std::process::exit(0);
 }
 
-fn save() {
+fn save(destination_path: &String) {
     print_separator("Save output file");
     // let mut destination_path = String::new();
     // print!("Enter file path: ");
@@ -107,11 +109,24 @@ fn save() {
     //     .read_line(&mut destination_path)
     //     .expect("Failed to read line");
     // let destination_path = destination_path.trim();
-    let destination_path = "output.txt";
-    match fs::copy("temp.txt", destination_path) {
-        Ok(_) => println!("File copied successfully"),
-        Err(e) => println!("Error copying file: {}", e),
+    if let Some(destination_path) = FileDialog::new()
+        .add_filter("log", &["txt", "log"])
+        .set_title("Save Log File")
+        .set_directory(destination_path)
+        .set_file_name("log.txt")
+        .save_file()
+    {
+        print_separator("");
+        match fs::copy("temp.txt", &destination_path) {
+            Ok(_) => println!("Saved {}", destination_path.display()),
+            Err(e) => println!("Error copying file: {}", e),
+        }
+    } else {
+        println!("Save operation was canceled");
     }
+
+    // let destination_path = "output.txt";
+    
     print_separator("");
 }
 

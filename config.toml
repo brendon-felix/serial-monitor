@@ -1,0 +1,6 @@
+port = 'COM5'
+baud_rate = 115200
+log_folder = 'C:\Users\felixb\OneDrive - HP Inc\Debugs\Springs'
+
+# reconnect = true
+# buffer_size = 1048576

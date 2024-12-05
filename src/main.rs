@@ -8,10 +8,11 @@ use env_logger;
 
 fn main() -> Result<()> {
     env_logger::init();
-    let config = get_config("serial_config.toml".to_string())
-        .context("Could not find configuration file `serial_config.toml`")?;
+    let config = get_config("config.toml".to_string())
+        .context("Could not find configuration file `config.toml`")?;
+    let config_cpy = config.clone();
     std::thread::spawn(move || {
-        if let Err(_) = command_loop() {
+        if let Err(_) = command_loop(config_cpy) {
             std::process::exit(1);
         }
     });

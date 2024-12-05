@@ -1,4 +1,0 @@
-port = "COM5"
-baud_rate = 115200
-# reconnect = true
-# buffer_size = 1048576
