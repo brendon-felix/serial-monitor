@@ -1,4 +1,5 @@
-use crate::config::Config;
+// use crate::config::Config;
+use crate::settings::Settings;
 use anyhow::{bail, Context, Result};
 use serialport5::{self, SerialPort, SerialPortBuilder};
 use std::io::{self, BufWriter, BufReader, BufRead, Read, Write};
@@ -9,7 +10,7 @@ use std::time::Duration;
 use colored::*;
 // use chrono::Local;
 
-pub fn open_serial_port(config: &Config) -> Result<(SerialPort, String)> {
+pub fn open_serial_port(config: &Settings) -> Result<(SerialPort, String)> {
     let port_name = config.port.clone();
     let baud_rate = config.baud_rate;
     let port = SerialPortBuilder::new()
@@ -81,7 +82,7 @@ fn new_output_file(file_path: String) -> Result<Box<dyn Write>> {
 
 }
 
-pub fn open(config: Config) -> Result<()> {
+pub fn open(config: Settings) -> Result<()> {
     let mut try_reconnect = false;
     let mut stdout = Box::new(BufWriter::with_capacity(1024, io::stdout()));
     let mut file = new_output_file("temp.txt".to_string()).expect("Can't open output file");

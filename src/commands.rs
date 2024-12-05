@@ -1,4 +1,5 @@
-use crate::config::Config;
+// use crate::config::Config;
+use crate::settings::Settings;
 use anyhow::{Context, Result};
 use serialport5;
 use std::time::Duration;
@@ -9,7 +10,7 @@ use crossterm::terminal::{enable_raw_mode, disable_raw_mode};
 use colored::*;
 use rfd::FileDialog;
 
-pub fn command_loop(config: Config) -> Result<()> {
+pub fn command_loop(config: Settings) -> Result<()> {
     enable_raw_mode().context("couldn't enabled raw mode")?;
     
     loop {
