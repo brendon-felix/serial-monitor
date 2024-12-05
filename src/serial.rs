@@ -66,12 +66,11 @@ pub fn read_serial_loop<W: Write>(
     }
 }
 
-fn new_output_file(file_path: String) -> Result<Box<dyn Write>> {
-    /* ------------------------------- REMOVE THIS ------------------------------ */
+fn new_log(file_path: String) -> Result<Box<dyn Write>> {
+    // remove temporary log if it exists
     if fs::metadata(&file_path).is_ok() {
         fs::remove_file(&file_path).context("Failed to remove existing output file")?;
     }
-    /* -------------------------------------------------------------------------- */
 
     let file: Box<dyn Write> = Box::new(OpenOptions::new()
         .create(true)
@@ -87,7 +86,7 @@ fn new_output_file(file_path: String) -> Result<Box<dyn Write>> {
 pub fn open(config: Settings) -> Result<()> {
     let mut try_reconnect = false;
     let mut stdout = Box::new(BufWriter::with_capacity(1024, io::stdout()));
-    let mut file = new_output_file("log.txt".to_string()).expect("Can't open output file");
+    let mut file = new_log("log.txt".to_string()).expect("Can't open output file");
 
     loop {
         let result = open_serial_port(&config);
