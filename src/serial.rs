@@ -2,7 +2,7 @@ use crate::settings::Settings;
 use anyhow::{bail, Context, Result};
 use serialport5::{self, SerialPort, SerialPortBuilder};
 use std::io::{self, BufWriter, BufReader, BufRead, Read, Write};
-use std::fs::{self, OpenOptions};
+use std::fs::{self, File};
 use std::sync::{Arc, Mutex};
 use regex::Regex;
 use std::time::Duration;
@@ -22,7 +22,7 @@ pub fn read_serial_loop<W: Write>(
     port: Arc<Mutex<SerialPort>>,
     timestamps: bool,
     stdout: &mut W,
-    file: &mut Box<dyn Write>,
+    file: &mut File,
 ) -> Result<()> {
     let mut buffer = Vec::new();
     let ansi_escape = Regex::new(r"\x1b\[[0-9;]*[mK]").unwrap();
@@ -66,27 +66,20 @@ pub fn read_serial_loop<W: Write>(
     }
 }
 
-fn new_log(file_path: String) -> Result<Box<dyn Write>> {
+fn new_log(file_path: String) -> Result<File> {
     // remove temporary log if it exists
     if fs::metadata(&file_path).is_ok() {
         fs::remove_file(&file_path).context("Failed to remove existing output file")?;
     }
-
-    let file: Box<dyn Write> = Box::new(OpenOptions::new()
-        .create(true)
-        .write(true)
-        .append(true)
-        .open(file_path)
-        .context("Failed to open output file")?);
     
+    let file = File::create(file_path).context("Failed to open output file")?;
     Ok(file)
-
 }
 
 pub fn open(config: Settings) -> Result<()> {
     let mut try_reconnect = false;
     let mut stdout = Box::new(BufWriter::with_capacity(1024, io::stdout()));
-    let mut file = new_log("log.txt".to_string()).expect("Can't open output file");
+    let mut file = new_log("log.txt".to_string()).context("Can't open output file")?;
 
     loop {
         let result = open_serial_port(&config);
