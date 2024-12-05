@@ -61,7 +61,7 @@ fn clear_console() {
 }
 
 fn wipe_output_file() {
-    File::create("temp.txt").expect("Failed to truncate the file");
+    File::create("log.txt").expect("Failed to truncate the file");
     print_separator("Output file wiped");
 }
 
@@ -118,7 +118,7 @@ fn save(destination_path: &String) {
         .save_file()
     {
         print_separator("");
-        match fs::copy("temp.txt", &destination_path) {
+        match fs::copy("log.txt", &destination_path) {
             Ok(_) => println!("Saved {}", destination_path.display()),
             Err(e) => println!("Error copying file: {}", e),
         }

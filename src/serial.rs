@@ -1,4 +1,3 @@
-// use crate::config::Config;
 use crate::settings::Settings;
 use anyhow::{bail, Context, Result};
 use serialport5::{self, SerialPort, SerialPortBuilder};
@@ -8,7 +7,7 @@ use std::sync::{Arc, Mutex};
 use regex::Regex;
 use std::time::Duration;
 use colored::*;
-// use chrono::Local;
+use chrono::Local;
 
 pub fn open_serial_port(config: &Settings) -> Result<(SerialPort, String)> {
     let port_name = config.port.clone();
@@ -21,6 +20,7 @@ pub fn open_serial_port(config: &Settings) -> Result<(SerialPort, String)> {
 
 pub fn read_serial_loop<W: Write>(
     port: Arc<Mutex<SerialPort>>,
+    timestamps: bool,
     stdout: &mut W,
     file: &mut Box<dyn Write>,
 ) -> Result<()> {
@@ -43,9 +43,11 @@ pub fn read_serial_loop<W: Write>(
                                 .context("Failed to write to stdout")?;
                             
                             // Output to file
-                            let output_line = ansi_escape.replace_all(&line, "");   // Remove unwanted ANSI codes
-                            // let timestamp = Local::now().format("%H:%M:%S.%3f");
-                            // let output_line = format!("[{}] {}", timestamp, output_line);    // Attach timestamp
+                            let mut output_line = ansi_escape.replace_all(&line, "").to_string();   // Remove unwanted ANSI codes
+                            if timestamps {
+                                let timestamp = Local::now().format("%H:%M:%S.%3f");
+                                output_line = format!("[{}] {}", timestamp, output_line);    // Attach timestamp
+                            }
                             file.write_all(output_line.as_bytes())
                                 .context("Failed to write to file")?;
                             stdout.flush().context("Failed to flush stdout")?;
@@ -85,7 +87,7 @@ fn new_output_file(file_path: String) -> Result<Box<dyn Write>> {
 pub fn open(config: Settings) -> Result<()> {
     let mut try_reconnect = false;
     let mut stdout = Box::new(BufWriter::with_capacity(1024, io::stdout()));
-    let mut file = new_output_file("temp.txt".to_string()).expect("Can't open output file");
+    let mut file = new_output_file("log.txt".to_string()).expect("Can't open output file");
 
     loop {
         let result = open_serial_port(&config);
@@ -95,7 +97,7 @@ pub fn open(config: Settings) -> Result<()> {
                 let connect_msg = format!("{} connected", name);
                 println!("{}", connect_msg.bold().green());
                 let port_arc = Arc::new(Mutex::new(port.try_clone()?));
-                match read_serial_loop(port_arc, &mut stdout, &mut file) {
+                match read_serial_loop(port_arc, config.timestamps, &mut stdout, &mut file) {
                     Ok(_) => {
                         break;
                     }
