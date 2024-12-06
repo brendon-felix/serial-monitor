@@ -23,7 +23,7 @@ pub fn command_loop(config: Settings) -> Result<()> {
                         KeyCode::Char('l') => list_ports(),
                         KeyCode::Char('q') => quit(),
                         KeyCode::Char('s') => save(&config.log_folder),
-                        KeyCode::Char('p') => set_port(),
+                        // KeyCode::Char('p') => set_port(),
                         KeyCode::Char('h') => help_message(),
                         _ => {}
                     }
@@ -67,19 +67,16 @@ fn wipe_output_file() {
 
 fn help_message() {
     print_separator("Help");
-    print!
-    (
-"Press the following keys to execute commands:
-
-- 'c': Clear the console
-- 'd': Wipe the output file
-- 'l': List available ports
-- 'q': Quit the application
-- 's': Save current state
-- 'p': Set the current port
-- 'h': Display this help message
-"
-    );
+    println!("Press the following keys to execute commands:");
+    println!("");
+    println!("- c: Clear the console");
+    println!("- d: Wipe the log");
+    println!("- l: List available ports");
+    println!("- q: Quit the application");
+    println!("- s: Save the log");
+    // println!("- p: Set the current port");
+    println!("- h: Display this help message");
+    // println!("");
     print_separator("");
 }
 
@@ -103,13 +100,6 @@ fn quit() {
 
 fn save(destination_path: &String) {
     print_separator("Save output file");
-    // let mut destination_path = String::new();
-    // print!("Enter file path: ");
-    // io::stdout().flush().unwrap();
-    // io::stdin()
-    //     .read_line(&mut destination_path)
-    //     .expect("Failed to read line");
-    // let destination_path = destination_path.trim();
     if let Some(destination_path) = FileDialog::new()
         .add_filter("log", &["txt", "log"])
         .set_title("Save Log File")
@@ -123,6 +113,7 @@ fn save(destination_path: &String) {
             Err(e) => println!("Error copying file: {}", e),
         }
     } else {
+        print_separator("");
         println!("Save operation was canceled");
     }
 
@@ -131,6 +122,6 @@ fn save(destination_path: &String) {
     print_separator("");
 }
 
-fn set_port() {
-    print_separator("Set serial port");
-}
+// fn set_port() {
+//     print_separator("Set serial port");
+// }
