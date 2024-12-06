@@ -1,15 +1,13 @@
 # spewcap
 
-Basic serial monitor program to capture serial spew (BIOS spew, Super I/O spew, etc). I kinda hate using TeraTerm, so this is intended to replace that.
+Basic serial monitor program to capture serial spew (BIOS spew, Super I/O spew, etc) written in the *best* programming language. I kinda hate using TeraTerm, so this is intended to replace that.
 
 ## Features
 
-- Use the TOML file or CLI arguments to configure the application (CLI arguments take precedent)
-- Easy-to-use key commands (`C` to clear, `S` to save, `Q` to quit, etc.)
-
-## Todo
-
-- [ ] Add serial input
+- [x] Use the TOML file or CLI arguments to configure the application (CLI arguments take precedent)
+- [x] Easy-to-use key commands (`C` to clear, `Q` to quit, etc.)
+- [x] Save logs using the built-in file explorer (use `S` to save)
+- [ ] Serial input (for host TX)
 
 ## Prerequisites
 
