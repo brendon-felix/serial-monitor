@@ -28,7 +28,7 @@ pub fn read_serial_loop<W: Write>(
     let ansi_escape = Regex::new(r"\x1b\[[0-9;]*[mK]").unwrap();
     loop {
         let mut port = port.lock().unwrap();
-        let mut data = [0; 256]; // Smaller buffer for each read
+        let mut data = [0; 256];
         match port.read(&mut data) {
             Ok(0) => return Ok(()),
             Ok(n) => {
@@ -38,23 +38,22 @@ pub fn read_serial_loop<W: Write>(
                     let mut line = String::new();
                     while reader.read_line(&mut line)? > 0 {
                         if line.ends_with('\n') {
-                            // Output to console
                             stdout.write_all(line.as_bytes())
                                 .context("Failed to write to stdout")?;
-                            
-                            // Output to file
-                            let mut output_line = ansi_escape.replace_all(&line, "").to_string();   // Remove unwanted ANSI codes
+                                
+                            let mut output_line = ansi_escape.replace_all(&line, "").to_string();
                             if timestamps {
                                 let timestamp = Local::now().format("%H:%M:%S.%3f");
-                                output_line = format!("[{}] {}", timestamp, output_line);    // Attach timestamp
+                                output_line = format!("[{}] {}", timestamp, output_line);
                             }
+
                             file.write_all(output_line.as_bytes())
                                 .context("Failed to write to file")?;
                             stdout.flush().context("Failed to flush stdout")?;
-                            line.clear(); // Clear the line buffer for the next line
+                            line.clear();
                         }
                     }
-                    buffer = line.into_bytes(); // Resave remaining content back to the buffer for next read
+                    buffer = line.into_bytes();
                 }
             }
             Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => continue,
@@ -71,7 +70,7 @@ fn new_log(file_path: String) -> Result<File> {
     if fs::metadata(&file_path).is_ok() {
         fs::remove_file(&file_path).context("Failed to remove existing output file")?;
     }
-    
+
     let file = File::create(file_path).context("Failed to open output file")?;
     Ok(file)
 }
