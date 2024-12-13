@@ -18,7 +18,7 @@ Basic serial monitor program to capture serial spew (BIOS spew, Super I/O spew, 
 
 1. Clone this repository:
     ```sh
-    git clone https://github.com/yourusername/spewcap.git # UPDATE LINK!
+    git clone https://github.azc.ext.hp.com/wks-fw/SpewCap.git
     cd spewcap
     ```
 

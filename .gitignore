@@ -2,4 +2,3 @@ target/
 .vscode/
 log.txt
 output.txt
-config.toml
