@@ -1,3 +1,4 @@
 port = 'COM5'
 baud_rate = 115200
 log_folder = 'C:\Users\felixb\OneDrive - HP Inc\Debugs\Springs'
+clear_on_start = true

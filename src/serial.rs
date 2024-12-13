@@ -84,7 +84,9 @@ pub fn open(config: Settings) -> Result<()> {
         let result = open_serial_port(&config);
         match result {
             Ok((port, name)) => {
-                // let _ = std::process::Command::new("cmd").args(["/c", "cls"]).status(); // clear console
+                if config.clear_on_start {
+                    let _ = std::process::Command::new("cmd").args(["/c", "cls"]).status(); // clear console
+                }
                 let connect_msg = format!("{} connected", name);
                 println!("{}", connect_msg.bold().green());
                 let port_arc = Arc::new(Mutex::new(port.try_clone()?));

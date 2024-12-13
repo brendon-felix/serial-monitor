@@ -30,6 +30,7 @@ struct Config {
     baud_rate: Option<u32>,
     timestamps: Option<bool>,
     log_folder: Option<String>,
+    clear_on_start: Option<bool>,
 }
 
 #[derive(Clone)]
@@ -38,6 +39,7 @@ pub struct Settings {
     pub baud_rate: u32,
     pub timestamps: bool,
     pub log_folder: String,
+    pub clear_on_start: bool,
 }
 
 fn get_config(filename: String) -> Option<Config> {
@@ -54,6 +56,7 @@ pub fn get_settings() -> Settings {
             timestamps: args.timestamps.or(config.timestamps).unwrap_or(false),
             log_folder: args.log_folder.or(config.log_folder)
                 .unwrap_or(r"C:\Users\felixb\OneDrive - HP Inc\Debugs\Springs".to_string()),
+            clear_on_start: config.clear_on_start.unwrap_or(false),
         }
     } else {
         Settings {
@@ -62,6 +65,7 @@ pub fn get_settings() -> Settings {
             timestamps: args.timestamps.unwrap_or(false),
             log_folder: args.log_folder
                 .unwrap_or(r"C:\Users\felixb\OneDrive - HP Inc\Debugs\Springs".to_string()),
+            clear_on_start: false,
         }
     }
     

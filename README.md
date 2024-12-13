@@ -1,4 +1,4 @@
-# spewcap
+# SpewCap
 
 Basic serial monitor program to capture serial spew (BIOS spew, Super I/O spew, etc) written in the *best* programming language. I kinda hate using TeraTerm, so this is intended to replace that.
 
