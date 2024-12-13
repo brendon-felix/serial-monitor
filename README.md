@@ -9,28 +9,34 @@ Basic serial monitor program to capture serial spew (BIOS spew, Super I/O spew, 
 - [x] Save logs using the built-in file explorer (use `S` to save)
 - [ ] Serial input (for host TX)
 
-## Prerequisites
-
-- Rust and Cargo installed: [Install Rust](https://www.rust-lang.org/tools/install)
-- A USB serial port device (usually UART)
-
 ## Installation
 
-1. Clone this repository:
+1. Clone this repository
     ```sh
     git clone https://github.azc.ext.hp.com/wks-fw/SpewCap.git
     cd spewcap
     ```
 
-2. Build the project:
+2. Build the project (optional, requires Rust and Cargo)
+    - [Install Rust](https://www.rust-lang.org/tools/install)
     ```sh
     cargo build --release
     ```
 
-3. Place the executable and TOML file in another location:
-    ```sh
-    cp .\config.toml C:\Program Files\serust
-    ```
+3. Place the executable and TOML file in another location
+    - If building from source:
+        ```sh
+        cp .\target\release\spewcap.exe 'C:\Program Files\SpewCap\'
+        cp .\config.toml 'C:\Program Files\SpewCap\'
+        ```
+    - If using an existing release:
+        ```sh
+        cp .\Releases\v0.10.0\spewcap.exe 'C:\Program Files\SpewCap\'
+        cp .\config.toml 'C:\Program Files\SpewCap\'
+        ```
+
+4. Right click on spewcap.exe to create a shortcut, then add the shortcut to the Start menu folder
+    > Tip: Place the shortcut file here: `C:\ProgramData\Microsoft\Windows\Start Menu\Programs\SpewCap\`
 
 ## Usage
 
