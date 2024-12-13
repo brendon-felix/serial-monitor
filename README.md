@@ -65,6 +65,22 @@ Basic serial monitor program to capture serial spew (BIOS spew, Super I/O spew, 
 
 ## Example
 
+### With command line option flags
+
 ```sh
 ./spewcap.exe -p COM5 -b 115200
+```
+
+### With `config.toml` configured
+
+```toml
+# config.toml
+
+port = 'COM5'
+baud_rate = 115200
+log_folder = 'C:\Users\username\Logs'
+clear_on_start = true
+```
+```sh
+./spewcap.exe
 ```

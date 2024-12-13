@@ -1,0 +1,4 @@
+# port = ''
+baud_rate = 115200
+# log_folder = ''
+clear_on_start = true
