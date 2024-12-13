@@ -18,7 +18,9 @@ Basic serial monitor program to capture serial spew (BIOS spew, Super I/O spew, 
     ```
 
 2. Build the project (optional, requires Rust and Cargo)
+
     - [Install Rust](https://www.rust-lang.org/tools/install)
+
     ```sh
     cargo build --release
     ```
